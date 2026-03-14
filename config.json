@@ -1,0 +1,30 @@
+{
+  "violetta": {
+   "charla": false,
+   "quitc" : ["quit", "exit", "cerrate", "cerrar"],
+   "hearc" : ["cuchame", "escuchame", "desensordate", "te hablo", "pasemos a modo charla", "quiero hablarte"],
+   "deafc" : ["quedate sorda", "no escuches", "no me escuches", "no escuches mas", "no escuchar", "necesito que no escuches"],
+   "charc" : ["hablemos de", "decime", "contame", "hablame", "charlemos"],
+   "excc" : ["hace esto", "quiero que hagas algo", "intenta", "proba"]
+  },
+  "azul": {
+   "db" : "z.db",
+   "model" : "Models/Azul.safetensors"
+  },
+  "rosa": {
+   "db" : "z.db",
+   "model" : "Models/tinyllama-1.1b-chat-v1.0.Q8_0.gguf"
+  },
+  "listener": {
+   "model": "Models/ggml-base.bin"
+,  "samplerate": 16000
+,  "hear": false
+,  "wait": "w"
+  },
+  "speaker": {
+   "model" : "Models/ggml-base.bin",
+   "talk" : true,
+   "sh" : ".",
+   "repetir" : "r"
+  }
+}
