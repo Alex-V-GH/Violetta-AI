@@ -9,11 +9,13 @@
   },
   "azul": {
    "db" : "z.db",
-   "model" : "Models/Azul.safetensors"
+   "model" : "Models/Azul.safetensors",
+   "ai_enabled" : true
   },
   "rosa": {
    "db" : "z.db",
-   "model" : "Models/tinyllama-1.1b-chat-v1.0.Q8_0.gguf"
+   "model" : "Models/tinyllama-1.1b-chat-v1.0.Q8_0.gguf",
+   "ai_enabled" : true
   },
   "listener": {
    "model": "Models/ggml-base.bin"
