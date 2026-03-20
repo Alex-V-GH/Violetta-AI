@@ -46,13 +46,17 @@ import threading
 import time
 from llama_cpp import Llama
 
+#===================================================================================================#
+#                   misc. functions                                                                 #
+#===================================================================================================#
+
 class Violetta:
     def __init__(self):
-        print(os.getcwd())
+        debug_print(os.getcwd())
         with open("config.json", "r", encoding="utf-8") as f:
             parameters = json.load(f)
-            self.Azul=Azul(parameters["azul"]["db"],parameters["azul"]["model"],parameters["azul"]["ai_enabled"])
-            self.Rosa=Rosa(parameters["rosa"]["db"],parameters["rosa"]["model"],parameters["rosa"]["ai_enabled"])
+            self.Celeste=Celeste(parameters["celeste"]["db"],parameters["celeste"]["model"],parameters["celeste"]["ai_enabled"])
+            self.Rosa=Rosa(parameters["rosa"]["db"],parameters["rosa"]["diccionario_base"],parameters["rosa"]["model"],parameters["rosa"]["ai_enabled"])
             self.Listener=Listener(parameters["listener"]["model"],parameters["listener"]["samplerate"],parameters["listener"]["hear"],parameters["listener"]["wait"])
             self.Speaker=Speaker(parameters["speaker"]["model"],parameters["speaker"]["talk"],parameters["speaker"]["sh"],parameters["speaker"]["repetir"])
             self.cola_inputs=queue.Queue()
@@ -71,19 +75,21 @@ class Violetta:
         self.t_consumidor=threading.Thread(target=self.consumidor_inputs, daemon=True)
         #lanzando hilos
         self.t_in_read.start()
-        self.t_in_hear.start()
+        #self.t_in_hear.start()
         self.t_consumidor.start()
         #pa que no cierre
         self.t_in_read.join()
-        self.t_in_hear.join()
+        #self.t_in_hear.join()
         self.t_consumidor.join()
 
 
     def consumidor_inputs(self):
         while True:
             chan, entrada = self.cola_inputs.get()
-            self.decide(entrada)
-            self.cola_inputs.task_done()
+            if entrada is not "":
+                debug_print(entrada)
+                self.decide(entrada)
+                self.cola_inputs.task_done()
             time.sleep(0.1)
     
     def read_in(self):
@@ -100,31 +106,31 @@ class Violetta:
         return re.sub(r'[^a-z0-9 _()"]', '', raw_wish.lower())
 
     def decide(self,elemento):
-        if self.quit_com in elemento:
+        if elemento in self.quit_com:
             exit()
-        elif self.hear_com in elemento:
+        elif elemento in self.hear_com:
             self.Listener.hear=True
-        elif self.deaf_com in elemento:
+        elif elemento in self.deaf_com:
             self.Listener.hear=False
-        elif self.charlar in elemento:
+        elif elemento in self.charlar:
             self.charla=True
-        elif self.exc in elemento:
+        elif elemento in self.exc:
             self.charla=False
         elif self.charla==True:
             self.Rosa.respuesta(elemento)
         else:
-            self.Azul.execute_wish(elemento)
+            self.Rosa.respuesta(self.Celeste.execute_wish(elemento))
 
                 
         
-class Azul:
+class Celeste:
     def __init__(self, db, model, enabled):
         self.data_base = db
         self.data = sqlite3.connect(self.data_base)
         self.data_cursor = self.data.cursor()
         self.ai_enabled = enabled
         if self.ai_enabled:
-            print(model)
+            debug_print(model)
             self.model = Llama(
             model_path=model,
             n_ctx=2048,
@@ -139,7 +145,7 @@ class Azul:
             row = self.data_cursor.fetchone()
             if row:
                 execution = "aux_scripts." + row[0]
-                print(execution)
+                debug_print(execution)
                 exec(execution)
                 hice = "el usuario te pidio que hagas " + wish + ", hiciste," + execution
             else:
@@ -196,13 +202,14 @@ class Azul:
 
 
 class Rosa:
-    def __init__(self, db, model, enabled):
+    def __init__(self, db, diccionario_base, model, enabled):
         self.data_base = db
+        self.diccionario_base = diccionario_base
         self.data = sqlite3.connect(self.data_base)
         self.data_cursor = self.data.cursor()
         self.ai_enabled=enabled
         if self.ai_enabled:
-            print(model)
+            debug_print(model)
             self.model = Llama(
             model_path=model,
             n_ctx=2048,
@@ -212,8 +219,15 @@ class Rosa:
         if self.ai_enabled:
             response = self.model(inpuct,max_tokens=50)
         else:
-            response = inpuct #calcular de forma manual, probablemente con otra función
-        print(f"[ROSA]**({response})")
+            response = self.calculate_response_no_ai(inpuct) #calcular de forma manual, probablemente con otra función
+        print(f"\n[ROSA]** {response}")
+
+    def calculate_response_no_ai (self,inpuct):
+        if inpuct.startswith("el usuario te pidio que hagas"):
+            inpuct = "Esto es lo que se me pidió:\n"
+        else:
+            inpuct = self.diccionario_base.get(inpuct,inpuct)
+        return inpuct
 
 
 class Listener:    #------------------------------REHACER COMPLETO BASADO EN AUDIO TO TEXT
@@ -240,7 +254,7 @@ class Listener:    #------------------------------REHACER COMPLETO BASADO EN AUD
 
 class Speaker:    #------------------------------REHACER COMPLETO BASADO EN TEXT TO SPEECH
     def __init__(self, model,talk,t_callar,t_repetir):
-        self.model = Model(model)
+        #self.model = Model(model)
         self.queue = queue.Queue()
         self.talk = talk
         self.tecla_callar = t_callar
